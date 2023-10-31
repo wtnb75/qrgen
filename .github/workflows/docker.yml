@@ -10,6 +10,6 @@ jobs:
     - uses: wtnb75/actions/docker@main
       with:
         username: ${{ github.actor }}
-        password: ${{ github.GITHUB_TOKEN }}
+        password: ${{ github.token }}
         context: .
         push: "true"
