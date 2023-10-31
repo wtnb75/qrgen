@@ -130,12 +130,12 @@ def txt_response(txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M) -
                     if m[1] != 1:
                         buf.write(f"<td class=\"black\" colspan=\"{m[1]}\" />")
                     else:
-                        buf.write(f"<td class=\"black\" />")
+                        buf.write("<td class=\"black\" />")
                 else:
                     if m[1] != 1:
                         buf.write(f"<td class=\"white\" colspan=\"{m[1]}\" />")
                     else:
-                        buf.write(f"<td class=\"white\" />")
+                        buf.write("<td class=\"white\" />")
             buf.write("</tr>\n")
         buf.write(html_post)
         return HTMLResponse(content=buf.getvalue())
