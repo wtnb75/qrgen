@@ -20,14 +20,15 @@ def cli(ctx):
 @click.option("--port", type=int, default=3000, show_default=True)
 @click.option("--verbose/--quiet", default=None)
 def server(host, port, verbose):
+    """boot server"""
     from logging import basicConfig
     fmt = "%(asctime)s %(levelname)s %(name)s %(message)s"
     if verbose is None:
-        basicConfig(format=fmt, level="INFO")
+        basicConfig(format=fmt, level="INFO", force=True)
     elif verbose:
-        basicConfig(format=fmt, level="DEBUG")
+        basicConfig(format=fmt, level="DEBUG", force=True)
     else:
-        basicConfig(format=fmt, level="WARNING")
+        basicConfig(format=fmt, level="WARNING", force=True)
     uvicorn.run(api, host=host, port=port, log_config=None)
 
 
