@@ -1,0 +1,13 @@
+on:
+  push: {}
+  workflow_dispatch: {}
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: wtnb75/actions/python@main
+      with:
+        pipinstall: "-r requirements.txt -r requirements-dev.txt"
+    - uses: wtnb75/actions/pytest@main

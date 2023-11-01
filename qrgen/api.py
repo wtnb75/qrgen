@@ -195,7 +195,7 @@ def do_url(url: str, title: str = None,
            fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
     """URL or Bookmark"""
     if title:
-        return f"MEBKM:TITLE:{_wifi_escape(title)};URL:{_wifi_escape(url)}"
+        return f"MEBKM:TITLE:{_wifi_escape(title)};URL:{_wifi_escape(url)};;"
     return url
 
 
