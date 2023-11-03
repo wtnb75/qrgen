@@ -28,23 +28,25 @@ class TestCLI(unittest.TestCase):
                 cli, ["server", "--host", "1.2.3.4", "--port", "3000"])
             run.assert_called_once_with(
                 ANY, host="1.2.3.4", port=3000, log_config=ANY)
+            self.assertEqual(0, res.exit_code)
 
     def test_server_verbose(self):
         from logging import getLogger, DEBUG
-        with patch("uvicorn.run") as run:
+        with patch("uvicorn.run"):
             res = CliRunner().invoke(cli, ["server", "--verbose"])
             self.assertEqual(DEBUG, getLogger().level)
+            self.assertEqual(0, res.exit_code)
 
     def test_server_quiet(self):
         from logging import getLogger, WARNING
-        with patch("uvicorn.run") as run:
-            res = CliRunner().invoke(cli, ["server", "--quiet"])
+        with patch("uvicorn.run"):
+            CliRunner().invoke(cli, ["server", "--quiet"])
             self.assertEqual(WARNING, getLogger().level)
 
     def test_server_normal(self):
         from logging import getLogger, INFO
-        with patch("uvicorn.run") as run:
-            res = CliRunner().invoke(cli, ["server"])
+        with patch("uvicorn.run"):
+            CliRunner().invoke(cli, ["server"])
             self.assertEqual(INFO, getLogger().level)
 
     def test_server_help(self):
