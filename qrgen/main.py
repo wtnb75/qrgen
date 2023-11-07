@@ -19,7 +19,8 @@ def cli(ctx):
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", type=int, default=3000, show_default=True)
 @click.option("--verbose/--quiet", default=None)
-def server(host, port, verbose):
+@click.option("--root-path")
+def server(host, port, verbose, root_path):
     """boot server"""
     from logging import basicConfig
     fmt = "%(asctime)s %(levelname)s %(name)s %(message)s"
@@ -29,7 +30,8 @@ def server(host, port, verbose):
         basicConfig(format=fmt, level="DEBUG", force=True)
     else:
         basicConfig(format=fmt, level="WARNING", force=True)
-    uvicorn.run(api, host=host, port=port, log_config=None)
+    uvicorn.run(api, host=host, port=port,
+                log_config=None, root_path=root_path)
 
 
 if __name__ == "__main__":
