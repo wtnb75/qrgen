@@ -27,7 +27,15 @@ class TestCLI(unittest.TestCase):
             res = CliRunner().invoke(
                 cli, ["server", "--host", "1.2.3.4", "--port", "3000"])
             run.assert_called_once_with(
-                ANY, host="1.2.3.4", port=3000, log_config=ANY)
+                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path=None)
+            self.assertEqual(0, res.exit_code)
+
+    def test_server_rootpath(self):
+        with patch("uvicorn.run") as run:
+            res = CliRunner().invoke(
+                cli, ["server", "--host", "1.2.3.4", "--port", "3000", "--root-path", "/qrgen"])
+            run.assert_called_once_with(
+                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/qrgen")
             self.assertEqual(0, res.exit_code)
 
     def test_server_verbose(self):
