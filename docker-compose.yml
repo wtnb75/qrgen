@@ -1,0 +1,64 @@
+version: "3"
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector
+    command:
+      - "--config=/etc/otel-collector-config.yaml"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+  zipkin:  # http://localhost:9411
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+  jaeger:  # http://localhost:16686
+    image: jaegertracing/all-in-one
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+  qrgen-otel:   # http://localhost:3000/docs
+    image: ghcr.io/wtnb75/qrgen-otel
+    build:
+      dockerfile: Dockerfile.otel
+    ports:
+      - "3000:3000/tcp"
+    entrypoint:
+      - opentelemetry-instrument
+      - --traces_exporter
+      - otlp
+      - --metrics_exporter
+      - none
+      - --exporter_otlp_endpoint
+      - otel-collector:4317
+      - --exporter_otlp_protocol
+      - grpc
+      - --exporter_otlp_insecure
+      - "true"
+      - --service_name
+      - qrgen
+      - qrgen
+    command:
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "3000"
+  qrgen:   # http://localhost:3001/docs
+    image: ghcr.io/wtnb75/qrgen
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001/tcp"
+    command:
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "3001"
