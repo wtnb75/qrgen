@@ -27,7 +27,7 @@ class TestCLI(unittest.TestCase):
             res = CliRunner().invoke(
                 cli, ["server", "--host", "1.2.3.4", "--port", "3000"])
             run.assert_called_once_with(
-                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path=None)
+                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/")
             self.assertEqual(0, res.exit_code)
 
     def test_server_rootpath(self):

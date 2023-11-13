@@ -1,3 +1,5 @@
+name: build docker images
+
 on:
   push: {}
   workflow_dispatch: {}
@@ -13,3 +15,15 @@ jobs:
         password: ${{ github.token }}
         context: .
         push: "true"
+  build-otel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: wtnb75/actions/docker@main
+      with:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+        context: .
+        file: Dockerfile.otel
+        push: "true"
+        image-name: wtnb75/qrgen-otel

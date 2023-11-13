@@ -9,6 +9,27 @@ import urllib.parse
 import qrcode.constants
 from qrcode.image.svg import SvgImage, SvgFragmentImage, SvgPathImage
 from qrcode.image.pure import PyPNGImage
+try:
+    from opentelemetry import trace
+    _tracer = trace.get_tracer("qrgen")
+except ImportError:
+    class trace:
+        @staticmethod
+        def get_current_span():
+            return trace
+
+        @staticmethod
+        def set_attribute(k, v):
+            pass
+
+    class _tracer:
+        @staticmethod
+        def start_as_current_span(s):
+            def _(fn):
+                def _wrapper(*args, **kwargs):
+                    return fn(*args, **kwargs)
+                return _wrapper
+            return _
 
 _log = getLogger(__name__)
 api = FastAPI()
@@ -75,7 +96,12 @@ def base_args(func):
     return _
 
 
+@_tracer.start_as_current_span("do_work")
 def txt_response(txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M) -> Response:
+    span = trace.get_current_span()
+    span.set_attribute("qrcode.txt", txt)
+    span.set_attribute("qrcode.format", format.name)
+    span.set_attribute("qrcode.error_collection", err.name)
     _log.info("generate %s, text=%s", format, txt)
     type_map = {
         Format.png: "image/png",

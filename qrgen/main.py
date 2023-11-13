@@ -19,7 +19,7 @@ def cli(ctx):
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", type=int, default=3000, show_default=True)
 @click.option("--verbose/--quiet", default=None)
-@click.option("--root-path")
+@click.option("--root-path", default="/")
 def server(host, port, verbose, root_path):
     """boot server"""
     from logging import basicConfig

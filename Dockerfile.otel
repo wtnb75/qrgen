@@ -1,0 +1,12 @@
+FROM python:3 as build
+ADD . /work
+RUN pip install wheel build
+RUN cd /work && python -m build -w
+
+FROM python:3
+COPY --from=build /work/dist/*.whl /
+RUN pip install /*.whl
+RUN pip install opentelemetry-distro
+RUN opentelemetry-bootstrap -a install
+RUN pip install opentelemetry-exporter-otlp-proto-http opentelemetry-exporter-otlp-proto-grpc
+ENTRYPOINT ["qrgen"]
