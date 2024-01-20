@@ -191,10 +191,7 @@ class WifiType(str, Enum):
 
 @api.get("/")
 def do_doc(request: Request):
-    root = request.scope.get("root_path")
-    if root:
-        return RedirectResponse(urllib.parse.urljoin(root, "docs"))
-    return RedirectResponse("/docs")
+    return RedirectResponse(urllib.parse.urljoin(str(request.url), "docs"))
 
 
 @api.get("/wifi")

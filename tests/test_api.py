@@ -37,4 +37,4 @@ class TestAPI(unittest.TestCase):
     def test_root(self):
         res = self.client.get("/", follow_redirects=False)
         self.assertTrue(res.is_redirect)
-        self.assertEqual("/docs", res.headers.get("location"))
+        self.assertTrue(res.headers.get("location").endswith("/docs"))
