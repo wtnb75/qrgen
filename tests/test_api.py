@@ -33,3 +33,8 @@ class TestAPI(unittest.TestCase):
         res = self.client.get("/wifi", params={"ssid": "SSID123"})
         self.assertEqual(200, res.status_code)
         self.assertEqual("image/png", res.headers.get("Content-Type"))
+
+    def test_root(self):
+        res = self.client.get("/", follow_redirects=False)
+        self.assertTrue(res.is_redirect)
+        self.assertEqual("/docs", res.headers.get("location"))
