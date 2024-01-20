@@ -1,8 +1,8 @@
 import io
 import functools
 from logging import getLogger
-from fastapi import FastAPI, Query
-from fastapi.responses import Response, HTMLResponse, PlainTextResponse
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import Response, HTMLResponse, PlainTextResponse, RedirectResponse
 from enum import Enum
 from qrcode.main import QRCode
 import urllib.parse
@@ -187,6 +187,11 @@ class WifiType(str, Enum):
     wpa = "WPA"
     wpa2_eap = "WPA2-EAP"
     nopass = "nopass"
+
+
+@api.get("/")
+def do_doc(request: Request):
+    return RedirectResponse(urllib.parse.urljoin(str(request.url), "docs"))
 
 
 @api.get("/wifi")
