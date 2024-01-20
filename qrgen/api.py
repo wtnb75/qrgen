@@ -1,7 +1,7 @@
 import io
 import functools
 from logging import getLogger
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import Response, HTMLResponse, PlainTextResponse, RedirectResponse
 from enum import Enum
 from qrcode.main import QRCode
@@ -190,7 +190,10 @@ class WifiType(str, Enum):
 
 
 @api.get("/")
-def do_doc():
+def do_doc(request: Request):
+    root = request.scope.get("root_path")
+    if root:
+        return RedirectResponse(urllib.parse.urljoin(root, "docs"))
     return RedirectResponse("/docs")
 
 
