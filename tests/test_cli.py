@@ -1,6 +1,8 @@
 import unittest
-from unittest.mock import patch, ANY
+from unittest.mock import ANY, patch
+
 from click.testing import CliRunner
+
 from qrgen.main import cli
 
 
@@ -25,34 +27,50 @@ class TestCLI(unittest.TestCase):
     def test_server(self):
         with patch("uvicorn.run") as run:
             res = CliRunner().invoke(
-                cli, ["server", "--host", "1.2.3.4", "--port", "3000"])
+                cli, ["server", "--host", "1.2.3.4", "--port", "3000"]
+            )
             run.assert_called_once_with(
-                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/")
+                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/"
+            )
             self.assertEqual(0, res.exit_code)
 
     def test_server_rootpath(self):
         with patch("uvicorn.run") as run:
             res = CliRunner().invoke(
-                cli, ["server", "--host", "1.2.3.4", "--port", "3000", "--root-path", "/qrgen"])
+                cli,
+                [
+                    "server",
+                    "--host",
+                    "1.2.3.4",
+                    "--port",
+                    "3000",
+                    "--root-path",
+                    "/qrgen",
+                ],
+            )
             run.assert_called_once_with(
-                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/qrgen")
+                ANY, host="1.2.3.4", port=3000, log_config=ANY, root_path="/qrgen"
+            )
             self.assertEqual(0, res.exit_code)
 
     def test_server_verbose(self):
-        from logging import getLogger, DEBUG
+        from logging import DEBUG, getLogger
+
         with patch("uvicorn.run"):
             res = CliRunner().invoke(cli, ["server", "--verbose"])
             self.assertEqual(DEBUG, getLogger().level)
             self.assertEqual(0, res.exit_code)
 
     def test_server_quiet(self):
-        from logging import getLogger, WARNING
+        from logging import WARNING, getLogger
+
         with patch("uvicorn.run"):
             CliRunner().invoke(cli, ["server", "--quiet"])
             self.assertEqual(WARNING, getLogger().level)
 
     def test_server_normal(self):
-        from logging import getLogger, INFO
+        from logging import INFO, getLogger
+
         with patch("uvicorn.run"):
             CliRunner().invoke(cli, ["server"])
             self.assertEqual(INFO, getLogger().level)

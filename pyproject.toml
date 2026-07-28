@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qrgen"
+dynamic = ["version"]
+description = "Generate QR code"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "Watanabe Takashi", email = "wtnb75@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "qrcode[png]",
+    "click",
+    "fastapi",
+    "uvicorn",
+]
+
+[project.scripts]
+qrgen = "qrgen.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/wtnb75/qrgen"
+
+[tool.hatch.version]
+path = "qrgen/version.py"
+pattern = "VERSION = ['\"](?P<version>[^'\"]+)['\"]"
+
+[tool.hatch.build.targets.wheel]
+packages = ["qrgen"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-github-actions-annotate-failures",
+    "httpx",
+    "ruff",
+    "pdoc",
+]
+
+[tool.ruff.lint]
+# B008: qrgen/api.py uses FastAPI's documented `Query(default=...)` pattern
+# in route function signatures (e.g. do_address's tel/telav/email/adr/url
+# params). This is idiomatic FastAPI - the call is evaluated once at import
+# time and cached, not per-request - not the mutable-default-argument bug
+# the rule is designed to catch. Rewriting these routes to work around a
+# ruff false positive is out of scope for this packaging migration, so it
+# is intentionally ignored rather than mechanically "fixed".
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py"]
+addopts = "--cov-report=html:cover --cov-report=term --cov-branch --cov-reset --cov=qrgen --doctest-modules"

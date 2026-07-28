@@ -1,5 +1,7 @@
 import unittest
+
 from fastapi.testclient import TestClient
+
 from qrgen.api import api
 
 
@@ -14,8 +16,7 @@ class TestAPI(unittest.TestCase):
     def test_wifi1(self):
         res = self.client.get("/wifi/html")
         self.assertEqual(200, res.status_code)
-        self.assertEqual("text/html; charset=utf-8",
-                         res.headers.get("Content-Type"))
+        self.assertEqual("text/html; charset=utf-8", res.headers.get("Content-Type"))
 
     def test_wifi1_fmterr(self):
         res = self.client.get("/wifi/htmlx")
