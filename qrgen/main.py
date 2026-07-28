@@ -1,6 +1,8 @@
-import click
 from logging import getLogger
+
+import click
 import uvicorn
+
 from .api import api
 from .version import VERSION
 
@@ -23,6 +25,7 @@ def cli(ctx):
 def server(host, port, verbose, root_path):
     """boot server"""
     from logging import basicConfig
+
     fmt = "%(asctime)s %(levelname)s %(name)s %(message)s"
     if verbose is None:
         basicConfig(format=fmt, level="INFO", force=True)
@@ -30,8 +33,7 @@ def server(host, port, verbose, root_path):
         basicConfig(format=fmt, level="DEBUG", force=True)
     else:
         basicConfig(format=fmt, level="WARNING", force=True)
-    uvicorn.run(api, host=host, port=port,
-                log_config=None, root_path=root_path)
+    uvicorn.run(api, host=host, port=port, log_config=None, root_path=root_path)
 
 
 if __name__ == "__main__":

@@ -1,18 +1,27 @@
-import io
 import functools
-from logging import getLogger
-from fastapi import FastAPI, Query, Request
-from fastapi.responses import Response, HTMLResponse, PlainTextResponse, RedirectResponse
-from enum import Enum
-from qrcode.main import QRCode
+import io
 import urllib.parse
+from enum import Enum
+from logging import getLogger
+
 import qrcode.constants
-from qrcode.image.svg import SvgImage, SvgFragmentImage, SvgPathImage
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import (
+    HTMLResponse,
+    PlainTextResponse,
+    RedirectResponse,
+    Response,
+)
 from qrcode.image.pure import PyPNGImage
+from qrcode.image.svg import SvgFragmentImage, SvgImage, SvgPathImage
+from qrcode.main import QRCode
+
 try:
     from opentelemetry import trace
+
     _tracer = trace.get_tracer("qrgen")
 except ImportError:
+
     class trace:
         @staticmethod
         def get_current_span():
@@ -28,8 +37,11 @@ except ImportError:
             def _(fn):
                 def _wrapper(*args, **kwargs):
                     return fn(*args, **kwargs)
+
                 return _wrapper
+
             return _
+
 
 _log = getLogger(__name__)
 api = FastAPI()
@@ -38,7 +50,7 @@ api = FastAPI()
 def _wifi_escape(txt: str) -> str:
     esc_chars = r'\;,":'
     for c in esc_chars:
-        txt = txt.replace(c, "\\"+c)
+        txt = txt.replace(c, "\\" + c)
     return txt
 
 
@@ -89,15 +101,20 @@ class Format(str, Enum):
 
 def base_args(func):
     @functools.wraps(func)
-    def _(*args, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M, **kwargs):
+    def _(
+        *args, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M, **kwargs
+    ):
         _log.info("fmt=%s, err=%s", fmt, err)
         txt = func(*args, fmt=fmt, err=err, **kwargs)
         return txt_response(txt, fmt, err)
+
     return _
 
 
 @_tracer.start_as_current_span("do_work")
-def txt_response(txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M) -> Response:
+def txt_response(
+    txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M
+) -> Response:
     span = trace.get_current_span()
     span.set_attribute("qrcode.txt", txt)
     span.set_attribute("qrcode.format", format.name)
@@ -154,14 +171,14 @@ def txt_response(txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M) -
             for m in mods:
                 if m[0]:
                     if m[1] != 1:
-                        buf.write(f"<td class=\"black\" colspan=\"{m[1]}\" />")
+                        buf.write(f'<td class="black" colspan="{m[1]}" />')
                     else:
-                        buf.write("<td class=\"black\" />")
+                        buf.write('<td class="black" />')
                 else:
                     if m[1] != 1:
-                        buf.write(f"<td class=\"white\" colspan=\"{m[1]}\" />")
+                        buf.write(f'<td class="white" colspan="{m[1]}" />')
                     else:
-                        buf.write("<td class=\"white\" />")
+                        buf.write('<td class="white" />')
             buf.write("</tr>\n")
         buf.write(html_post)
         return HTMLResponse(content=buf.getvalue())
@@ -169,8 +186,11 @@ def txt_response(txt: str, format: Format, err: ErrorCorrect = ErrorCorrect.M) -
         buf = io.BytesIO()
         img = qr.make_image()
         img.save(buf)
-    res = Response(content=buf.getvalue(), status_code=200,
-                   media_type=type_map.get(format, def_type))
+    res = Response(
+        content=buf.getvalue(),
+        status_code=200,
+        media_type=type_map.get(format, def_type),
+    )
     return res
 
 
@@ -197,24 +217,40 @@ def do_doc(request: Request):
 @api.get("/wifi")
 @api.get("/wifi/{fmt}")
 @base_args
-def do_wifi(type: WifiType = None, ssid: str = None,
-            password: str = None, hidden: bool = None, eap: str = None,
-            anonymous: str = None, identity: str = None, phase2: str = None,
-            fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_wifi(
+    type: WifiType = None,
+    ssid: str | None = None,
+    password: str | None = None,
+    hidden: bool | None = None,
+    eap: str | None = None,
+    anonymous: str | None = None,
+    identity: str | None = None,
+    phase2: str | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """WiFi Connection"""
-    params = _del_none({
-        "T": type, "S": ssid, "P": password, "H": hidden, "E": eap,
-        "A": anonymous, "I": identity, "PH2": phase2,
-    })
-    return "WIFI:" + \
-        ";".join([f"{k}:{_wifi_escape(v)}" for k, v in params.items()]) + ";;"
+    params = _del_none(
+        {
+            "T": type,
+            "S": ssid,
+            "P": password,
+            "H": hidden,
+            "E": eap,
+            "A": anonymous,
+            "I": identity,
+            "PH2": phase2,
+        }
+    )
+    return (
+        "WIFI:" + ";".join([f"{k}:{_wifi_escape(v)}" for k, v in params.items()]) + ";;"
+    )
 
 
 @api.get("/text")
 @api.get("/text/{fmt}")
 @base_args
-def do_text(v: str,
-            fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_text(v: str, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
     """raw text"""
     return v
 
@@ -222,8 +258,12 @@ def do_text(v: str,
 @api.get("/url")
 @api.get("/url/{fmt}")
 @base_args
-def do_url(url: str, title: str = None,
-           fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_url(
+    url: str,
+    title: str | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """URL or Bookmark"""
     if title:
         return f"MEBKM:TITLE:{_wifi_escape(title)};URL:{_wifi_escape(url)};;"
@@ -233,12 +273,17 @@ def do_url(url: str, title: str = None,
 @api.get("/mail")
 @api.get("/mail/{fmt}")
 @base_args
-def do_mail(addr: str, subject: str = None, cc: str = None, bcc: str = None, body: str = None,
-            fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_mail(
+    addr: str,
+    subject: str | None = None,
+    cc: str | None = None,
+    bcc: str | None = None,
+    body: str | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """EMAIL"""
-    params = _del_none({
-        "subject": subject, "cc": cc, "bcc": bcc, "body": body
-    })
+    params = _del_none({"subject": subject, "cc": cc, "bcc": bcc, "body": body})
     q = urllib.parse.urlencode(params)
     if q:
         return f"mailto:{addr}?{q}"
@@ -248,8 +293,7 @@ def do_mail(addr: str, subject: str = None, cc: str = None, bcc: str = None, bod
 @api.get("/tel")
 @api.get("/tel/{fmt}")
 @base_args
-def do_tel(n: str,
-           fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_tel(n: str, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
     """Telephone number"""
     return f"tel:{n}"
 
@@ -257,8 +301,12 @@ def do_tel(n: str,
 @api.get("/sms")
 @api.get("/sms/{fmt}")
 @base_args
-def do_sms(dst: str, msg: str = None,
-           fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_sms(
+    dst: str,
+    msg: str | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """SMS message"""
     if msg:
         return f"sms:{dst}:{urllib.parse.quote(msg)}"
@@ -268,8 +316,9 @@ def do_sms(dst: str, msg: str = None,
 @api.get("/facetime")
 @api.get("/facetime/{fmt}")
 @base_args
-def do_facetime(dst: str = None,
-                fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_facetime(
+    dst: str | None = None, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M
+):
     """facetime"""
     return f"facetime:{dst}"
 
@@ -277,8 +326,9 @@ def do_facetime(dst: str = None,
 @api.get("/facetime-audio")
 @api.get("/facetime-audio/{fmt}")
 @base_args
-def do_facetime_audio(dst: str,
-                      fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_facetime_audio(
+    dst: str, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M
+):
     """facetime audio"""
     return f"facetime-audio:{dst}"
 
@@ -288,8 +338,13 @@ def do_facetime_audio(dst: str,
 @api.get("/geo")
 @api.get("/geo/{fmt}")
 @base_args
-def do_geo(lat: float, lon: float, size: int = None,
-           fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_geo(
+    lat: float,
+    lon: float,
+    size: int | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """geo location"""
     if size:
         return f"geo:{lat},{lon},{size}"
@@ -299,8 +354,7 @@ def do_geo(lat: float, lon: float, size: int = None,
 @api.get("/youtube")
 @api.get("/youtube/{fmt}")
 @base_args
-def do_youtube(vid: str,
-               fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_youtube(vid: str, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
     """YouTube link"""
     return f"https://www.youtube.com/v/{vid}"
 
@@ -308,8 +362,9 @@ def do_youtube(vid: str,
 @api.get("/googleplay")
 @api.get("/googleplay/{fmt}")
 @base_args
-def do_googleplay(id: str,
-                  fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_googleplay(
+    id: str, fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M
+):
     """google play link"""
     return f"market://details?id={id}"
 
@@ -323,8 +378,15 @@ def fix_date(k, dtstr):
 @api.get("/event")
 @api.get("/event/{fmt}")
 @base_args
-def do_event(summary: str, uid: str, transp: str, dtstart: str, dtend: str,
-             fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_event(
+    summary: str,
+    uid: str,
+    transp: str,
+    dtstart: str,
+    dtend: str,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """vEvent(WIP)"""
     params = [
         "BEGIN:VEVENT",
@@ -340,26 +402,33 @@ def do_event(summary: str, uid: str, transp: str, dtstart: str, dtend: str,
 @api.get("/addr")
 @api.get("/addr/{fmt}")
 @base_args
-def do_address(name: str = None, sound: str = None,
-               tel: list[str] = Query(default=[]),
-               telav: list[str] = Query(default=[]),
-               email: list[str] = Query(default=[]),
-               note: str = None, bday: str = None,
-               adr: list[str] = Query(default=[]),
-               url: list[str] = Query(default=[]),
-               nickname: str = None,
-               fmt: Format = Format.png, err: ErrorCorrect = ErrorCorrect.M):
+def do_address(
+    name: str | None = None,
+    sound: str | None = None,
+    tel: list[str] = Query(default=[]),
+    telav: list[str] = Query(default=[]),
+    email: list[str] = Query(default=[]),
+    note: str | None = None,
+    bday: str | None = None,
+    adr: list[str] = Query(default=[]),
+    url: list[str] = Query(default=[]),
+    nickname: str | None = None,
+    fmt: Format = Format.png,
+    err: ErrorCorrect = ErrorCorrect.M,
+):
     """DoCoMo MECARD"""
-    params = _del_none_list([
-        ("N", name),
-        ("SOUND", sound),
-        ("NOTE", note),
-        ("BDAY", bday),
-        ("NICKNAME", nickname),
-    ])
+    params = _del_none_list(
+        [
+            ("N", name),
+            ("SOUND", sound),
+            ("NOTE", note),
+            ("BDAY", bday),
+            ("NICKNAME", nickname),
+        ]
+    )
     params.extend([("TEL", x) for x in tel])
     params.extend([("TEL-AV", x) for x in telav])
     params.extend([("EMAIL", x) for x in email])
     params.extend([("ADR", x) for x in adr])
     params.extend([("URL", x) for x in url])
-    return "MECARD:"+";".join([f"{k}:{v}" for k, v in params])+";;"
+    return "MECARD:" + ";".join([f"{k}:{v}" for k, v in params]) + ";;"
